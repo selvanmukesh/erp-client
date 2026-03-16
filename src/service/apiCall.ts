@@ -16,3 +16,12 @@ export const del = (url: string) => {
         method: "DELETE"
     }).then(res => res.json());
 };
+
+export const put = (url: string, body: any) => {
+    return fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        // credentials: "include", 
+        body: JSON.stringify(body)
+    }).then(res => res.json());
+}; 
