@@ -1,119 +1,88 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { get, post } from "../service/apiCall";
 import { nanoid } from "nanoid";
 
 const ReportModule = () => {
   const [report, setReport] = useState([]);
-  const [reportModule, setReportModule] = useState<any>([]);
-  const [toadd, setToAdd] = useState<any>([]);
-  const [allModules, setAllModules] = useState<any>([]);
-  const [updateReportModule, setUpdateReportModule] = useState<any>([]);
+  const [modulesByReportId, setModulesByReportId] = useState<any>([]);
+  const [impactModule, setImpactModule] = useState<any>([]);
+  const saveData = useRef<any[]>([]);
+  const selectedReport = useRef<any>(null);
+
   useEffect(() => {
     fetchAsync();
   }, [])
-  //   {
-  //     "id": 66,
-  //     "name": "CRM Main",
-  //     "orderNo": 1,
-  //     "impactModuleId": null
-  // },
+
 
   const fetchAsync = async () => {
     try {
       const apiUrl = import.meta.env.VITE_ERP_REPORT;
-
-      const url = `${apiUrl}/report`
-      const response = await get(url);
-      setReport(response.data)
-
-    } catch (error) {
-      console.error("Login Error", error);
-    }
-    try {
-      const apiUrl = import.meta.env.VITE_ERP_REPORT;
-
-      const url = `${apiUrl}/reportModule`
-      const response = await get(url);
-      setAllModules(response.data);
-
+      const reportModule = `${apiUrl}/reportModule`//To fetch all reports
+      const fetchAllReportApi = `${apiUrl}/report`
+      const [fetchAllReportApiResponse, reportModuleResponse] = await Promise.all([get(fetchAllReportApi), get(reportModule)])
+      setReport(fetchAllReportApiResponse.data);
+      setImpactModule(reportModuleResponse.data);
     } catch (error) {
       console.error("Login Error", error);
     }
   }
+
   const handleChange = (e: any) => {
+    selectedReport.current = null
     const selectId = e.target.value;
-
     if (selectId) {
-      const findReportById: any = report.find((item: any) => item.id == selectId);
-      findReportModuleById(findReportById.id)
-      // setReportModule(findReportById)
-      if (toadd?.length > 0) {
-        setToAdd((prev: any) =>
-          prev.map((item: any) => ({
-            ...item,
-            reportId: findReportById.id,
-            impactModuleId: null
-          }))
-        );
-      }
-    } else {
-      setReportModule([]);
-      setToAdd([])
-    }
+      selectedReport.current = selectId
+      findReportModuleById(selectId)
+    };
   }
-  const add = () => {
-    const reportId = reportModule?.[0]?.reportId;
-    if (!reportId) {
-      alert("please Select Report Id");
-      return;
-    }
 
+  const add = () => {
     const payload: any = {
-      index: nanoid(),
+      id: nanoid(),
       name: null,
       orderNo: null,
       impactModuleId: null,
-      reportId: reportId
+      reportId: selectedReport.current || null
     }
-    setToAdd([...toadd, payload])
+    setModulesByReportId([...modulesByReportId, payload])
+    saveData.current.push(payload);
   }
-  const handleInputChange = (e: any, index: string) => {
+
+  const handleInputChange = (e: any, id: string | number) => {
     const value = e.target.value?.trim();
     const keyName = e.target.name;
 
-    if (keyName) findAndUpdate(index, value, keyName);
+    if (keyName) findAndUpdate(id, value, keyName);
   }
 
-  const findAndUpdate = (id: String, value: any, KeyName: string) => {
-    const findIndex = toadd.findIndex((item: any) => item.index == id);
-    if (KeyName === "orderNo" || KeyName === "impactModuleId") {
+  const findAndUpdate = (id: String | number, value: any, keyName: string) => {
+    const toUpdateDataIndex = saveData.current.findIndex((item: any) => item.id == id);
+    if (keyName === "orderNo" || keyName === "impactModuleId") {
       const valueToInt = parseInt(value);
-      value = Number.isNaN(valueToInt) ? null : valueToInt
-
+      value = Number.isNaN(valueToInt) ? null : valueToInt;
     }
 
-    let AllData = toadd;
-    if (findIndex >= 0) {
-      AllData[findIndex][KeyName] = value;
-      setToAdd(AllData);
-
+    if (toUpdateDataIndex >= 0) {
+      saveData.current[toUpdateDataIndex][keyName] = value;
     }
-
+    else {
+      const toUpdateDbDataIndex = modulesByReportId.findIndex((item: any) => item.id === id);
+      if (toUpdateDbDataIndex >= 0) {
+        const data: any = modulesByReportId[toUpdateDbDataIndex];
+        data[keyName] = value;
+        saveData.current.push(data)
+      }
+    }
   }
+
   const submit = async () => {
+    console.log("saveData---93->", saveData);
     try {
       const apiUrl = import.meta.env.VITE_ERP_REPORT;
-
       const url = `${apiUrl}/reportModule`
-
-      const response = await post(url, toadd);
-      const reportId = reportModule?.[0]?.reportId;
-
-
-      setToAdd([]);
-      if (reportId) findReportModuleById(reportId);
-
-
+      const payload = saveData?.current.map(item => ({ ...item, id: typeof item.id === "string" ? null : item.id }))
+      const response = await post(url, payload);
+      console.log("response-->", response);
     } catch (error) {
       console.error("Login Error", error);
     }
@@ -122,76 +91,18 @@ const ReportModule = () => {
 
   const findReportModuleById = async (id: string) => {
     try {
+      setModulesByReportId([]);
       const apiUrl = import.meta.env.VITE_ERP_REPORT;
-
       const url = `${apiUrl}/reportModule/${id}`
       const response = await get(url);
-      setReportModule(response.data)
-      // setReport(response.data)
-      let payload: any = response.data.map((item: any) => {
-        return {
-          id: item.moduleId,
-          name: item.moduleName,
-          orderNo: item.moduleOrder,
-          impactModuleId: item.impactModuleId,
-          reportId: item.reportId
-        }
-      })
-      console.log("payload--->140--->", payload);
-
-
-      setUpdateReportModule(payload)
-
+      if (response?.status === 200) {
+        setModulesByReportId(response.data)
+      }
     } catch (error) {
       console.error("Login Error", error);
     }
   }
 
-  const handleUpdateInputChange = (e: any, index: string) => {
-    const value = e.target.value?.trim();
-    const keyName = e.target.name;
-
-    if (keyName) findUpdateInputChange(index, value, keyName);
-  }
-  const findUpdateInputChange = (id: String, value: any, KeyName: string) => {
-    const findIndex = updateReportModule.findIndex((item: any) => item.id == id);
-    console.log("finded Index--->",findIndex);
-    
-    if (KeyName === "orderNo" || KeyName === "impactModuleId") {
-      const valueToInt = parseInt(value);
-      value = Number.isNaN(valueToInt) ? null : valueToInt
-    }
-
-    let AllData = updateReportModule;
-    if (findIndex >= 0) {
-      AllData[findIndex][KeyName] = value;
-      setUpdateReportModule(AllData);
-
-    }
-
-  }
-
-  const updateAll=async()=>{
-
-    console.log("updateAll--->",updateReportModule);
-    try {
-      const apiUrl = import.meta.env.VITE_ERP_REPORT;
-
-      const url = `${apiUrl}/reportModule`
-
-      const response = await post(url, updateReportModule);
-      const reportId = updateReportModule?.[0]?.id;
-
-
-      setUpdateReportModule([]);
-      if (reportId) findReportModuleById(reportId);
-
-
-    } catch (error) {
-      console.error("Login Error", error);
-    }
-    
-  }
 
   return (
     <div>
@@ -203,10 +114,11 @@ const ReportModule = () => {
       </select>
       <div>
         <h1>Modules</h1>
+        {selectedReport.current && <button onClick={add}>Add</button>}
         <table cellSpacing={20} width={"100%"}>
           <thead>
             <tr>
-              <th>Report Name</th>
+              {/* <th>Report Name</th> */}
               <th>Module Name</th>
               <th>Order</th>
               <th>Impact Module</th>
@@ -214,13 +126,13 @@ const ReportModule = () => {
           </thead>
 
           <tbody>
-            {reportModule?.map((item: any) => (
-              <tr key={item.moduleId}>
-                <td>{item.reportName}</td>
-                <td>{reportModule?.name}
+            {modulesByReportId?.map((item: any) => (
+              <tr key={item.id}>
+                {/* <td>{item.reportName}</td> */}
+                <td>{modulesByReportId?.name}
                   <input type="text" placeholder="Name" name="name"
                     defaultValue={item.moduleName}
-                    onChange={(e) => handleUpdateInputChange(e, item.moduleId)}
+                    onChange={(e) => handleInputChange(e, item.id)}
                   />
 
                 </td>
@@ -228,13 +140,13 @@ const ReportModule = () => {
                 {/* <td>{item.name}</td> */}
                 <td> <input type="number" placeholder="Order No" name="orderNo"
                   defaultValue={item.moduleOrder}
-                  onChange={(e) => handleUpdateInputChange(e, item.moduleId)}
+                  onChange={(e) => handleInputChange(e, item.id)}
                 />
                 </td>
                 <td>
-                  <select name="impactModuleId" id="impactModuleId" defaultValue={item.impactModuleId} onChange={(e) => handleUpdateInputChange(e, item.moduleId)}>
+                  <select name="impactModuleId" id="impactModuleId" defaultValue={item.impactModuleId} onChange={(e) => handleInputChange(e, item.id)}>
                     <option value="" >Impact Module</option>
-                    {allModules && allModules.map((item: any) => {
+                    {impactModule && impactModule.map((item: any) => {
                       return <option key={item.id} value={item.id}>{item.name}</option>
                     })}
 
@@ -244,43 +156,9 @@ const ReportModule = () => {
             ))}
           </tbody>
         </table>
-        <button onClick={updateAll}>UpdateAll</button>
-        {/* <div>
-          {
-            reportModule?.reportModule && reportModule.reportModule.map((item: any) => {
-
-              return (
-
-                <div key={item.id}>{item.name}</div>
-              )
-            })
-          }
-        </div> */}
-      </div>
-      <div>
-        <button onClick={add}>Add</button>
-        <div>
-          {
-            toadd && toadd.map((item: any) => {
-              return (
-                <div key={item.index}>
-                  <input type="text" placeholder="Name" name="name" onChange={(e) => handleInputChange(e, item.index)} />
-                  <input type="number" placeholder="Order No" name="orderNo" onChange={(e) => handleInputChange(e, item.index)} />
-                  <select name="impactModuleId" id="impactModuleIdAdd" onChange={(e) => handleInputChange(e, item.index)}>
-                    <option value="" >Impact Module</option>
-                    {allModules && allModules.map((item: any) => {
-                      return <option key={item.id} value={item.id}>{item.name}</option>
-                    })}
-
-                  </select>
-
-                </div>
-              )
-            })
-          }
-        </div>
         <button onClick={submit}>Submit</button>
       </div>
+
     </div>
   )
 }

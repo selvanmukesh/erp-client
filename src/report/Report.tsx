@@ -42,14 +42,8 @@ const Report = () => {
       const toUpdateDbDataIndex = allReportData.findIndex((item: any) => item.id === id);
       if (toUpdateDbDataIndex >= 0) {
         const data = allReportData[toUpdateDbDataIndex];
-        const payload: any = {
-          id: data?.id || null,
-          name: data.name,
-          orderNo: parseInt(data.orderNo),
-          link: data.link,
-        }
-        payload[keyName] = value;
-        saveData.current.push(payload)
+        data[keyName] = value;
+        saveData.current.push(data)
       }
 
     }
