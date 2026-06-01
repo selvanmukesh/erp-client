@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { get, post, put } from "../service/apiCall";
 import { nanoid } from "nanoid";
+import DownloadExcel from "../components/DownloadExcel";
 
 const Report = () => {
 
@@ -90,6 +91,7 @@ const Report = () => {
         <table cellSpacing={10} width={"100%"}>
           <thead>
             <tr>
+              <td>Index</td>
               <td>Report Name</td>
               <td>Link</td>
               <td>Order No</td>
@@ -97,9 +99,10 @@ const Report = () => {
             </tr>
           </thead>
           <tbody>
-            {allReportData && allReportData.map((item: any) => {
+            {allReportData && allReportData.map((item: any,index:number) => {
               return (
                 <tr key={item.id || item.customId}>
+                  <td>{index+1}</td>
                   <td>
                     <input style={{ width: "100%" }} type="text" placeholder="Name" defaultValue={item.name} name="name" onChange={(e) => handleInputChange(e, item.id)} />
                   </td>
@@ -119,6 +122,7 @@ const Report = () => {
           </tbody>
         </table>
         <button onClick={submit}>submit</button>
+        <DownloadExcel />
       </div>
 
     </div>

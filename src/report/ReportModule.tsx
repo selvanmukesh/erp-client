@@ -76,7 +76,6 @@ const ReportModule = () => {
   }
 
   const submit = async () => {
-    console.log("saveData---93->", saveData);
     try {
       const apiUrl = import.meta.env.VITE_ERP_REPORT;
       const url = `${apiUrl}/reportModule`
@@ -131,7 +130,7 @@ const ReportModule = () => {
                 {/* <td>{item.reportName}</td> */}
                 <td>{modulesByReportId?.name}
                   <input type="text" placeholder="Name" name="name"
-                    defaultValue={item.moduleName}
+                    defaultValue={item.name}
                     onChange={(e) => handleInputChange(e, item.id)}
                   />
 
@@ -139,7 +138,7 @@ const ReportModule = () => {
 
                 {/* <td>{item.name}</td> */}
                 <td> <input type="number" placeholder="Order No" name="orderNo"
-                  defaultValue={item.moduleOrder}
+                  defaultValue={item.orderNo}
                   onChange={(e) => handleInputChange(e, item.id)}
                 />
                 </td>
