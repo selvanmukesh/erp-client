@@ -102,6 +102,10 @@ const ReportModule = () => {
     }
   }
 
+  const handleDelete = (id: number | string) => {
+    setModulesByReportId(modulesByReportId.filter((item:any) => item.id !== id));
+    saveData.current = saveData.current.filter(item => item.id !== id)
+  }
 
   return (
     <div>
@@ -121,6 +125,7 @@ const ReportModule = () => {
               <th>Module Name</th>
               <th>Order</th>
               <th>Impact Module</th>
+              <td>Action</td>
             </tr>
           </thead>
 
@@ -151,6 +156,10 @@ const ReportModule = () => {
 
                   </select>
                 </td>
+                <td>
+                    {typeof item.id === "string" ? <button onClick={() => handleDelete(item.id)}>Delete</button> : <></>
+                    }
+                  </td>
               </tr>
             ))}
           </tbody>
