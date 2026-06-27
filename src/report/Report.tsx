@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { get, post, put } from "../service/apiCall";
 import { nanoid } from "nanoid";
 import DownloadExcel from "../components/DownloadExcel";
+import { API, apiPath } from "../config/api";
 
 const Report = () => {
 
@@ -14,8 +15,7 @@ const Report = () => {
   }, [])
 
   const fetchAsyncData = async () => {
-    const apiUrl = import.meta.env.VITE_ERP_REPORT;
-    const [reportData]: any = await Promise.allSettled([get(`${apiUrl}/report/reportTable`)]);
+    const [reportData]: any = await Promise.allSettled([get(apiPath.reportTable)]);
     if (reportData && reportData?.value?.data) {
       setAllReportData(reportData?.value?.data)
     }
@@ -30,7 +30,6 @@ const Report = () => {
   const handleDelete = (id: number | string) => {
     setAllReportData(allReportData.filter(item => item.id !== id));
     saveData.current = saveData.current.filter(item => item.id !== id)
-    console.log("delete_id", id);
 
   }
 
@@ -67,9 +66,7 @@ const Report = () => {
 
     const payload = saveData?.current.map(item => ({ ...item, id: typeof item.id === "string" ? null : item.id }))
     try {
-      const apiUrl = import.meta.env.VITE_ERP_REPORT;
-      const url = `${apiUrl}/report`
-      const response = await post(url, payload);
+      const response = await post(apiPath.report, payload);
       if (response?.status === 200) {
         saveData.current = [];
         setAllReportData([])

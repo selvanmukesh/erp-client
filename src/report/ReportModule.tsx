@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { get, post } from "../service/apiCall";
 import { nanoid } from "nanoid";
+import { apiPath } from "../config/api";
 
 const ReportModule = () => {
   const [report, setReport] = useState([]);
@@ -16,10 +17,7 @@ const ReportModule = () => {
 
   const fetchAsync = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_ERP_REPORT;
-      const reportModule = `${apiUrl}/reportModule`//To fetch all reports
-      const fetchAllReportApi = `${apiUrl}/report`
-      const [fetchAllReportApiResponse, reportModuleResponse] = await Promise.all([get(fetchAllReportApi), get(reportModule)])
+      const [fetchAllReportApiResponse, reportModuleResponse] = await Promise.all([get(apiPath.report), get(apiPath.reportModule)])
       setReport(fetchAllReportApiResponse.data);
       setImpactModule(reportModuleResponse.data);
     } catch (error) {
@@ -77,10 +75,8 @@ const ReportModule = () => {
 
   const submit = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_ERP_REPORT;
-      const url = `${apiUrl}/reportModule`
       const payload = saveData?.current.map(item => ({ ...item, id: typeof item.id === "string" ? null : item.id }))
-      const response = await post(url, payload);
+      const response = await post(apiPath.reportModule, payload);
       console.log("response-->", response);
     } catch (error) {
       console.error("Login Error", error);
@@ -91,8 +87,7 @@ const ReportModule = () => {
   const findReportModuleById = async (id: string) => {
     try {
       setModulesByReportId([]);
-      const apiUrl = import.meta.env.VITE_ERP_REPORT;
-      const url = `${apiUrl}/reportModule/${id}`
+      const url = `${apiPath.reportModule}/${id}`
       const response = await get(url);
       if (response?.status === 200) {
         setModulesByReportId(response.data)

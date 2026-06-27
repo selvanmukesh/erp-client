@@ -3,7 +3,7 @@ const DownloadExcel = () => {
     const handleDownload = async () => {
         try {
    
-            const apiUrl = import.meta.env.VITE_ERP_REPORT;
+            const apiUrl =  `${import.meta.env.VITE_ERP_GATE_WAY}${import.meta.env.VITE_ERP_REPORT}`;;
             window.open(
                 `${apiUrl}/reportModule/reportInfo/download`,
                 "_blank"
